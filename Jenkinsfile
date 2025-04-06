@@ -7,13 +7,14 @@ pipeline {
     environment {
         strDockerTag = "${TODAY}_${BUILD_ID}"
         strDockerImage ="wombat1234/cicd_guestbook:${strDockerTag}"
+        strGitUrl = "https://github.com/wombathero999/guestbook.git"
     }
 
     stages {
         stage('Checkout') {
             agent { label 'agent1' }
             steps {
-                git branch: 'master', url:'https://github.com/wombathero999/guestbook.git'
+                git branch: 'master', url:"${strGitUrl}"
             }
         }
         stage('Build') {
@@ -71,6 +72,8 @@ pipeline {
         stage('Docker Image Build') {
             agent { label 'agent2' }
             steps {
+                git branch: 'master', url: "${strGitUrl}"
+                sh './mvnw clean package'
                 script {
                     //oDockImage = docker.build(strDockerImage)
                     oDockImage = docker.build(strDockerImage, "--build-arg VERSION=${strDockerTag} -f Dockerfile .")
@@ -116,7 +119,7 @@ pipeline {
     post {
         always {
             emailext (attachLog: true, body: '본문', compressLog: true
-            , recipientProviders: [buildUser()], subject: '제목', to: 'yu3papa.j@gmail.com')
+            , recipientProviders: [buildUser()], subject: '제목', to: 'wombathero999@gmail.com')
             }
         success {
             slackSend(tokenCredentialId: 'slack-token'
